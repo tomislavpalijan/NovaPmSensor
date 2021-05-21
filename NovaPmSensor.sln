@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31313.79
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NovaPmSensor", "NovaPmSensor\NovaPmSensor.csproj", "{12343B4C-483C-4152-BCBD-D9BC615F0CF0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PmSensor.Communication", "PmSensor.Communication\PmSensor.Communication.csproj", "{39606D60-5F70-455A-A675-53711EDE9098}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{12343B4C-483C-4152-BCBD-D9BC615F0CF0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{12343B4C-483C-4152-BCBD-D9BC615F0CF0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{12343B4C-483C-4152-BCBD-D9BC615F0CF0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{12343B4C-483C-4152-BCBD-D9BC615F0CF0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{39606D60-5F70-455A-A675-53711EDE9098}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{39606D60-5F70-455A-A675-53711EDE9098}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{39606D60-5F70-455A-A675-53711EDE9098}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{39606D60-5F70-455A-A675-53711EDE9098}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {DBA8B735-927E-42A7-8D35-25D08AB0BAD3}
+	EndGlobalSection
+EndGlobal
