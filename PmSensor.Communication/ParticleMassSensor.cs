@@ -6,6 +6,7 @@ namespace PmSensor.Communication
 {
     public class ParticleMassSensor
     {
+        public IParticleMassSensorParser Parser { get; set; }   
         public Parity Parity { get; set; }
         public SerialPort Port { get; private set; }
         public string PortName { get; set; }
@@ -14,6 +15,7 @@ namespace PmSensor.Communication
         public int DataBits { get; }
 
         public event Action<bool> PortOpenChangedEvent;
+
 
         private bool _isPortOpen;
 
@@ -51,6 +53,7 @@ namespace PmSensor.Communication
             DataBits = dataBits;
 
             Port = new SerialPort(PortName, BaudRate, Parity, DataBits, StopBit);
+            Parser = new ParticleMassSensorParser();
         }
 
         public void Open()
@@ -66,6 +69,14 @@ namespace PmSensor.Communication
             Thread.Sleep(100);
 
             IsPortOpen = Port.IsOpen;
+
+            Parser.NewMeasurementEvent -= ParserOnNewMeasurementEvent;
+            Parser.NewMeasurementEvent += ParserOnNewMeasurementEvent;
+        }
+
+        private void ParserOnNewMeasurementEvent(byte[] obj)
+        {
+            throw new NotImplementedException();
         }
 
         public void Close()
@@ -85,6 +96,7 @@ namespace PmSensor.Communication
             if (!IsPortOpen)
                 return;
 
+            throw new NotImplementedException();
 
         }
 
