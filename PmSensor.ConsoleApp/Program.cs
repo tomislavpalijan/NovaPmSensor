@@ -8,9 +8,15 @@ namespace PmSensor.ConsoleApp
 
         static void Main(string[] args)
         {
-            var sensor = new ParticleMassSensor("COM6");
+            var sensor = new ParticleMassSensor("COM9");
 
-            Console.WriteLine("Hello World!");
+            sensor.PortOpenChangedEvent += delegate(bool b) { Console.WriteLine($"port is open {b}"); };
+
+            sensor.Open();
+
+            Console.WriteLine("start reading ...!");
+
+            Console.ReadKey(true);
         }
     }
 }

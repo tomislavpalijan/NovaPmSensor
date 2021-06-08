@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Ports;
 using System.Threading;
@@ -118,7 +119,16 @@ namespace PmSensor.Communication
 
         private void ParserOnNewMeasurementEvent(byte[] obj)
         {
-            throw new NotImplementedException();
+
+            var pm25lb = obj[2];
+            var pm25hb = obj[3];
+            var pm10hb = obj[5];
+            var pm10lb = obj[4];
+
+            var result25 = (float) (pm25hb * 256 + pm25lb) / 10 ;
+            var result10 = (float) (pm10hb * 256 + pm10lb) / 10 ;
+
+            Debug.WriteLine($"2.5pm = {result25:F3} : 2.5hi= {pm25hb} 2.5lo = {pm25lb}   10pm = {result10:F3} : 10hi = {pm10hb} 10lo = {pm10lb}");
         }
 
         public void Close()
