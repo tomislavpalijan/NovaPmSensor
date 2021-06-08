@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.IO.Ports;
 using System.Threading;
 
@@ -31,7 +32,11 @@ namespace PmSensor.Communication
                 OnPortOpenChangedEvent(_isPortOpen);
             }
         }
-            
+
+
+        private Stream _portStream;
+        private const int MESSAGE_SIZE = 20;
+        private byte[] _rxBuffer;
 
         /// <summary>
         /// Default values 
@@ -39,12 +44,16 @@ namespace PmSensor.Communication
         /// stop bits = one,
         /// data bits = 8,
         /// parity = none
+        /// parser = <see cref="ParticleMassSensorParser"/>
         /// </summary>
         /// <param name="portName">serial port name</param>
         public ParticleMassSensor(string portName)
-        : this(portName, 9600, StopBits.One, 8, Parity.None) { }
+        : this(portName, 9600, StopBits.One, 8, Parity.None, new ParticleMassSensorParser()) { }
 
-        public ParticleMassSensor(string portName, int baudRate, StopBits stopBits, int dataBits, Parity parity)
+        public ParticleMassSensor(string portName, IParticleMassSensorParser parser)
+            : this(portName, 9600, StopBits.One, 8, Parity.None, parser) { }
+
+        public ParticleMassSensor(string portName, int baudRate, StopBits stopBits, int dataBits, Parity parity, IParticleMassSensorParser parser)
         {
             Parity = parity;
             PortName = portName;
@@ -53,7 +62,7 @@ namespace PmSensor.Communication
             DataBits = dataBits;
 
             Port = new SerialPort(PortName, BaudRate, Parity, DataBits, StopBit);
-            Parser = new ParticleMassSensorParser();
+            Parser = parser;
         }
 
         public void Open()
@@ -64,14 +73,47 @@ namespace PmSensor.Communication
             if (Port.IsOpen)
                 return;
 
+            Parser.NewMeasurementEvent -= ParserOnNewMeasurementEvent;
+            Parser.NewMeasurementEvent += ParserOnNewMeasurementEvent;
+
+            _rxBuffer = new byte[MESSAGE_SIZE];
+
+            Port.DataReceived -= PortOnDataReceived;
+            Port.DataReceived += PortOnDataReceived;
+
             Port.Open();
 
+            _portStream = Port.BaseStream;
+                        
             Thread.Sleep(100);
 
             IsPortOpen = Port.IsOpen;
 
-            Parser.NewMeasurementEvent -= ParserOnNewMeasurementEvent;
-            Parser.NewMeasurementEvent += ParserOnNewMeasurementEvent;
+
+        }
+
+        private void PortOnDataReceived(object sender, SerialDataReceivedEventArgs e)
+        {
+            try
+            {
+                ParseReceivedData();
+            }
+            catch (Exception )
+            {
+
+            }
+        }
+
+
+        private void ParseReceivedData()
+        {
+            var bytesToRead = Math.Min(MESSAGE_SIZE, Port.BytesToRead);
+            _portStream.Read(_rxBuffer, 0, bytesToRead);
+
+            for (var i = 0; i < bytesToRead; i++)
+            {
+                Parser.Parse(_rxBuffer[i]);
+            }
         }
 
         private void ParserOnNewMeasurementEvent(byte[] obj)
@@ -89,6 +131,8 @@ namespace PmSensor.Communication
             Thread.Sleep(100);
 
             IsPortOpen = Port.IsOpen;
+            _portStream = null;
+            _rxBuffer = null;
         }
 
         public void ReadData()

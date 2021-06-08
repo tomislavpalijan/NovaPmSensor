@@ -5,7 +5,9 @@ VisualStudioVersion = 16.0.31313.79
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NovaPmSensor", "NovaPmSensor\NovaPmSensor.csproj", "{12343B4C-483C-4152-BCBD-D9BC615F0CF0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PmSensor.Communication", "PmSensor.Communication\PmSensor.Communication.csproj", "{39606D60-5F70-455A-A675-53711EDE9098}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PmSensor.Communication", "PmSensor.Communication\PmSensor.Communication.csproj", "{39606D60-5F70-455A-A675-53711EDE9098}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PmSensor.ConsoleApp", "PmSensor.ConsoleApp\PmSensor.ConsoleApp.csproj", "{CCD40BFA-1531-4BBA-9428-797BA1D39E86}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{39606D60-5F70-455A-A675-53711EDE9098}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{39606D60-5F70-455A-A675-53711EDE9098}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{39606D60-5F70-455A-A675-53711EDE9098}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CCD40BFA-1531-4BBA-9428-797BA1D39E86}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CCD40BFA-1531-4BBA-9428-797BA1D39E86}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CCD40BFA-1531-4BBA-9428-797BA1D39E86}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CCD40BFA-1531-4BBA-9428-797BA1D39E86}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
