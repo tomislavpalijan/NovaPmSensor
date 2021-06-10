@@ -1,13 +1,25 @@
 ﻿using System;
-using System.Diagnostics;
 using System.IO;
 using System.IO.Ports;
 using System.Threading;
 
 namespace PmSensor.Communication
 {
+    /// <summary>
+    /// The SDS011 using principle of laser scattering,can get the particle 
+    /// concentration between 0.25 to 10μm in the air.
+    /// The unit of the measurement results is μg/m³ <see cref="ParticleMassSensorValues"/>  
+    /// </summary>
     public class ParticleMassSensor
     {
+        private readonly byte[] _queryMode = { 0xAA, 0xB4, 0x02, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x02, 0xAB };
+        private readonly byte[] _activeMode = { 0xAA, 0xB4, 0x02, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x01, 0xAB };
+        private readonly byte[] _queryPmData = { 0xAA, 0xB4, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x02, 0xAB };
+        private readonly byte[] _deviceIdQuery =  { 0xAA, 0xB4, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x03, 0xAB };
+        private readonly byte[] _sleep = { 0xAA, 0xB4, 0x06, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x05, 0xAB };
+        private readonly byte[] _wakeUp = { 0xAA, 0xB4, 0x06, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x06, 0xAB };
+        private readonly byte[] _firmware = { 0xAA, 0xB4, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x05, 0xAB };
+
         public IParticleMassSensorParser Parser { get; set; }   
         public Parity Parity { get; set; }
         public SerialPort Port { get; private set; }
@@ -18,6 +30,12 @@ namespace PmSensor.Communication
 
         public event Action<bool> PortOpenChangedEvent;
 
+        /// <summary>
+        /// The unit of the measurement results <see cref="ParticleMassSensorValues"/> 2.5μm and 10μm is μg/m³
+        /// </summary>
+        public event Action<ParticleMassSensorValues> NewMeasurementEvent;
+
+        public event Action<string> ErrorMessageEvent; 
 
         private bool _isPortOpen;
 
@@ -40,6 +58,7 @@ namespace PmSensor.Communication
         private byte[] _rxBuffer;
 
         /// <summary>
+        /// <see cref="ParticleMassSensor"/>
         /// Default values 
         /// baud = 9600,
         /// stop bits = one,
@@ -74,6 +93,7 @@ namespace PmSensor.Communication
             if (Port.IsOpen)
                 return;
 
+
             Parser.NewMeasurementEvent -= ParserOnNewMeasurementEvent;
             Parser.NewMeasurementEvent += ParserOnNewMeasurementEvent;
 
@@ -89,8 +109,6 @@ namespace PmSensor.Communication
             Thread.Sleep(100);
 
             IsPortOpen = Port.IsOpen;
-
-
         }
 
         private void PortOnDataReceived(object sender, SerialDataReceivedEventArgs e)
@@ -99,9 +117,9 @@ namespace PmSensor.Communication
             {
                 ParseReceivedData();
             }
-            catch (Exception )
+            catch (Exception exp)
             {
-
+                OnErrorMessageEvent(exp.Message);
             }
         }
 
@@ -109,6 +127,7 @@ namespace PmSensor.Communication
         private void ParseReceivedData()
         {
             var bytesToRead = Math.Min(MESSAGE_SIZE, Port.BytesToRead);
+
             _portStream.Read(_rxBuffer, 0, bytesToRead);
 
             for (var i = 0; i < bytesToRead; i++)
@@ -117,18 +136,9 @@ namespace PmSensor.Communication
             }
         }
 
-        private void ParserOnNewMeasurementEvent(byte[] obj)
+        private void ParserOnNewMeasurementEvent(ParticleMassSensorValues obj)
         {
-
-            var pm25lb = obj[2];
-            var pm25hb = obj[3];
-            var pm10hb = obj[5];
-            var pm10lb = obj[4];
-
-            var result25 = (float) (pm25hb * 256 + pm25lb) / 10 ;
-            var result10 = (float) (pm10hb * 256 + pm10lb) / 10 ;
-
-            Debug.WriteLine($"2.5pm = {result25:F3} : 2.5hi= {pm25hb} 2.5lo = {pm25lb}   10pm = {result10:F3} : 10hi = {pm10hb} 10lo = {pm10lb}");
+            NewMeasurementEvent?.Invoke(obj);
         }
 
         public void Close()
@@ -145,18 +155,65 @@ namespace PmSensor.Communication
             _rxBuffer = null;
         }
 
-        public void ReadData()
+        /// <summary>
+        /// sets active mode or query mode
+        /// in active mode sensor will send every second a measurement (1Hz)
+        /// </summary>
+        /// <param name="on">true = active mode, false = query mode</param>
+        public void SetActiveMode(bool on)
         {
-            if (!IsPortOpen)
+            SendCommand(@on ? _activeMode : _queryMode);
+        }
+
+        /// <summary>
+        /// sets sleep or wake-up 
+        /// </summary>
+        /// <param name="on">true = sleep , false = wake-up</param>
+        public void SetSleep(bool on)
+        {
+            SendCommand(@on ? _sleep : _wakeUp);
+        }
+
+        /// <summary>
+        /// gets device id
+        /// </summary>
+        public void GetDeviceId()
+        {
+            SendCommand(_deviceIdQuery);
+        }
+
+        /// <summary>
+        /// gets firmware
+        /// </summary>
+        public void GetFirmware()
+        {
+            SendCommand(_firmware);
+        }
+
+        /// <summary>
+        /// gets measurement only in query mode available.
+        /// </summary>
+        public void GetMeasurement()
+        {
+            SendCommand(_queryPmData);
+        }
+
+        private void SendCommand(byte[] commandBytes, int offset = 0 )
+        {
+            if(Port == null || !IsPortOpen)
                 return;
 
-            throw new NotImplementedException();
-
+            Port.Write(commandBytes, offset, commandBytes.Length);
         }
 
         protected virtual void OnPortOpenChangedEvent(bool isPortOpen)
         {
             PortOpenChangedEvent?.Invoke(isPortOpen);
+        }
+
+        protected virtual void OnErrorMessageEvent(string obj)
+        {
+            ErrorMessageEvent?.Invoke(obj);
         }
     }
 }

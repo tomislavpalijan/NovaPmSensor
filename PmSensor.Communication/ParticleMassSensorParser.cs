@@ -6,19 +6,30 @@ namespace PmSensor.Communication
 {
     public interface IParticleMassSensorParser
     {
-        event Action<byte[]> NewMeasurementEvent;
+        event Action<ParticleMassSensorValues> NewMeasurementEvent;
         void Parse(byte b);
+    }
+
+    public class ParticleMassSensorValues
+    {
+        public float TwoPointFiveMicroMeterValue { get; set; }
+        public float TenMicroMeterValue { get; set; }
     }
 
     public class ParticleMassSensorParser : IParticleMassSensorParser
     {
+        private int pm25lb = 2;
+        private int pm25hb = 3;
+        private int pm10hb = 5;
+        private int pm10lb = 4;
+        
         private const byte MessageHeader = 0xAA;
         private const byte MeasureCommand = 0xC0;
         private const byte MessageTail = 0xAB;
         private int rxBufferPosition = 0;
         private byte[] rxBuffer = new byte[10];
         private bool isMeasurement = false;
-        public event Action<byte[]> NewMeasurementEvent;
+        public event Action<ParticleMassSensorValues> NewMeasurementEvent;
 
         public void Parse(byte b)
         {
@@ -48,8 +59,11 @@ namespace PmSensor.Communication
                         if(VerifyCheckSum())
                             Task.Factory.StartNew(() =>
                             {
-                                var message = new byte[10];
-                                Array.Copy(rxBuffer, message, rxBuffer.Length);
+                                var message = new ParticleMassSensorValues
+                                {
+                                    TwoPointFiveMicroMeterValue = (float)(rxBuffer[pm25hb] * 256 + rxBuffer[pm25lb]) / 10,
+                                    TenMicroMeterValue = (float) (rxBuffer[pm10hb] * 256 + rxBuffer[pm10lb]) / 10
+                            };
                                 OnNewMeasurementEvent(message);
                             });
                         rxBufferPosition = 0;
@@ -77,7 +91,7 @@ namespace PmSensor.Communication
         }
 
 
-        protected virtual void OnNewMeasurementEvent(byte[] obj)
+        protected virtual void OnNewMeasurementEvent(ParticleMassSensorValues obj)
         {
             NewMeasurementEvent?.Invoke(obj);
         }
